@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<title>Weekly Planner</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+
+/* THEME */
+:root {
+    --bg: #f8f9f7;
+    --card: #ffffff;
+    --border: #dcdcdc;
+    --text: #2f3e46;
+    --dots: #9aa5a9;
+    --highlight: #e8f1ee;
+    --hour: #dce8e0;
+    --alert: #c0524a;
+}
+.dark {
+    --bg: #1e1f21;
+    --card: #2a2c2f;
+    --border: #444;
+    --text: #e6e6e6;
+    --dots: #777;
+    --highlight: #2f3a37;
+    --hour: #3a4a45;
+    --alert: #e07a72;
+}
+
+body {
+    font-family: Arial;
+    margin: 10px;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* LAYOUT */
+.container {
+    display: grid;
+    grid-template-columns: 240px 1fr 260px;
+    gap: 10px;
+    height: 95vh;
+}
+.left, .right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+.box, .day {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 6px;
+}
+
+/* HEADINGS */
+h3 { margin: 3px 0; font-size: 16px; font-weight: 600; }
+h4 { margin: 3px 0; font-size: 15px; font-weight: 600; }
+.line {
+    border-bottom: 1px dotted var(--dots);
+    height: 18px;
+}
+
+/* WEEK */
+.week {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    overflow-y: auto;
+}
+.row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.day.today {
+    background: var(--highlight);
+    border: 1px solid var(--text);
+}
+
+/* TIME */
+.time-block { display: flex; font-size: 11px; }
+.time { width: 45px; color: var(--dots); }
+.input { flex: 1; border-bottom: 1px dotted var(--dots); }
+.time-block.active {
+    background: var(--hour);
+    border-left: 3px solid var(--text);
+}
+
+/* TASK */
+.section { margin-top: 10px; }
+.task {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    border-bottom: 1px dotted var(--dots);
+}
+.task span[contenteditable] { flex: 1; }
+.target { width: 35px; }
+.pomo span {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--text);
+    border-radius: 50%;
+    margin: 1px;
+    cursor: pointer;
+}
+.filled { background: var(--text); }
+.carry {
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--dots);
+    font-size: 12px;
+    padding: 0 2px;
+}
+.carry:hover { color: var(--text); }
+
+/* LOG */
+.log { flex: 1; overflow-y: auto; }
+.entry { border-bottom: 1px dotted var(--dots); height: 18px; display: block; }
+
+/* TIMER */
+.timer { text-align: center; font-size: 16px; }
+.timer.alert #time { color: var(--alert); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+button {
+    margin: 2px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+/* QUOTE */
+.quote {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 17px;
+    opacity: 0.9;
+    margin-top: 6px;
+    text-align: center;
+}
+
+/* CONTROLS */
+.controls { margin-top: auto; }
+.control-btn {
+    margin-top: 5px;
+    border: 1px solid var(--border);
+    padding: 6px;
+    cursor: pointer;
+    text-align: center;
+}
+.control-btn.danger:hover { border-color: var(--alert); color: var(--alert); }
+
+/* TOPBAR */
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 6px;
+}
+#syncStatus {
+    font-size: 11px;
+    color: var(--dots);
+    margin-left: 6px;
+}
+.topbar-timer {
+    display: none;
+    align-items: center;
+    gap: 3px;
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: bold;
+}
+.mobile .topbar-timer { display: flex; }
+
+/* TODAY / MOBILE MODE */
+.mobile .day { display: none; }
+.mobile .day.today { display: block; }
+.mobile .left { display: none; }
+.mobile .controls { display: none; }
+.mobile .container { display: block; height: auto; }
+.mobile .week { display: block; height: auto; }
+.mobile .row { display: block; }
+
+/* MOBILE MEDIA */
+@media (max-width: 800px) {
+    .container { display: block; }
+    .week { display: block; height: auto; }
+    .left, .right { width: 100%; }
+    .week .row { display: block; }
+}
+
+/* QUICK INPUT */
+.quick { display: none; }
+@media (max-width: 800px) {
+    .quick { display: flex; margin-bottom: 5px; }
+    .quick input { flex: 1; padding: 5px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- SIGN-IN OVERLAY -->
+<div id="signinOverlay" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:100; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+    <div style="font-size:20px; font-weight:600;">Weekly Planner</div>
+    <div style="font-size:13px; color:var(--dots);">Sign in to load your planner</div>
+    <button id="signinBtn" style="padding:8px 18px; font-size:14px;">Sign in with Google</button>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <button onclick="toggleTheme()">Theme</button>
+    <button onclick="toggleView()">Week / Today</button>
+    <span id="syncStatus">connecting…</span>
+    <div class="topbar-timer">
+        <span id="topTime">25:00</span>
+        <button onclick="startTimer()">▶</button>
+        <button onclick="pauseTimer()">⏸</button>
+        <button onclick="resetTimer()">↺</button>
+    </div>
+</div>
+
+<!-- QUICK LOG -->
+<div class="quick">
+    <input id="quickInput" placeholder="What did you just do?">
+    <button onclick="addQuick()">+</button>
+</div>
+
+<div class="container">
+
+<div class="left">
+
+    <div class="box">
+        <h3>Weekly Intention</h3>
+        <div contenteditable class="line" data-key="left-intention-0"></div>
+        <div contenteditable class="line" data-key="left-intention-1"></div>
+        <div contenteditable class="line" data-key="left-intention-2"></div>
+    </div>
+
+    <div class="box">
+        <h3>Most Important Tasks</h3>
+        <div contenteditable class="line" data-key="left-mit-0"></div>
+        <div contenteditable class="line" data-key="left-mit-1"></div>
+        <div contenteditable class="line" data-key="left-mit-2"></div>
+    </div>
+
+    <div class="box timer" id="timerBox">
+        <div id="time">25:00</div>
+        <button onclick="startTimer()">Start</button>
+        <button onclick="pauseTimer()">Pause</button>
+        <button onclick="resetTimer()">Reset</button>
+    </div>
+
+    <div class="box">
+        <h3>Weekly Overview</h3>
+        <div contenteditable class="line" data-key="left-overview-0"></div>
+        <div contenteditable class="line" data-key="left-overview-1"></div>
+        <div contenteditable class="line" data-key="left-overview-2"></div>
+    </div>
+
+    <div class="box">
+        <h3>Weekly Gratitude</h3>
+        <div contenteditable class="line" data-key="left-gratitude-0"></div>
+        <div contenteditable class="line" data-key="left-gratitude-1"></div>
+        <div contenteditable class="line" data-key="left-gratitude-2"></div>
+    </div>
+
+    <div class="box">
+        <h3>Weekly Affirmation</h3>
+        <div contenteditable class="line" data-key="left-affirmation-0"></div>
+    </div>
+
+    <div id="quote" class="quote"></div>
+
+</div>
+
+<!-- WEEK -->
+<div class="week">
+    <div class="row">
+        <div class="day" id="mon"></div>
+        <div class="day" id="tue"></div>
+        <div class="day" id="wed"></div>
+    </div>
+    <div class="row">
+        <div class="day" id="thu"></div>
+        <div class="day" id="fri"></div>
+        <div class="day" id="weekend"></div>
+    </div>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+    <div class="box log" id="log">
+        <h3>What I Actually Did</h3>
+    </div>
+    <div class="controls">
+        <div class="control-btn" onclick="toggleTheme()">Light / Dark Mode</div>
+        <div class="control-btn" onclick="toggleView()">Week / Today View</div>
+        <div class="control-btn danger" onclick="clearWeek()">Clear Week (archives first)</div>
+        <div class="control-btn" onclick="signOut()">Sign Out</div>
+    </div>
+</div>
+
+</div>
+
+<script>
+
+// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
+// 1. Go to https://firebase.google.com → create a free project
+// 2. Enable Realtime Database (test mode)
+// 3. Add a Web App, copy the firebaseConfig object it gives you, paste below
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDuJSzlDKkBgCYfp6SGcqbq5bHyPBq1fCk",
+    authDomain: "weekly-planner-5136f.firebaseapp.com",
+    databaseURL: "https://weekly-planner-5136f-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "weekly-planner-5136f",
+    storageBucket: "weekly-planner-5136f.firebasestorage.app",
+    messagingSenderId: "643498969782",
+    appId: "1:643498969782:web:aa7d6b2ed22898a1c63417",
+    measurementId: "G-2MYK47R1W4"
+};
+
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+
+let lastEditTime = 0;
+
+function save(key, val) {
+    try { localStorage.setItem('planner:' + key, val); } catch(e) {}
+    lastEditTime = Date.now();
+    pushToFirebase();
+}
+
+function load(key, fallback) {
+    try {
+        const v = localStorage.getItem('planner:' + key);
+        return v !== null ? v : (fallback !== undefined ? fallback : null);
+    } catch(e) { return fallback !== undefined ? fallback : null; }
+}
+
+function persist(el, key) {
+    const saved = load(key);
+    if (saved !== null) {
+        if (el.isContentEditable || el.contentEditable === 'true') el.innerText = saved;
+        else el.value = saved;
+    }
+    el.addEventListener('input', () => {
+        save(key, (el.isContentEditable || el.contentEditable === 'true') ? el.innerText : el.value);
+    });
+}
+
+// ── THEME & VIEW (these run immediately, before Firebase) ─────────────────────
+
+if (load('theme') === 'dark') document.body.classList.add('dark');
+if (window.innerWidth < 800) document.body.classList.add('mobile');
+
+function toggleTheme() {
+    document.body.classList.toggle('dark');
+    save('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+}
+function toggleView() {
+    document.body.classList.toggle('mobile');
+}
+
+// ── FIREBASE ──────────────────────────────────────────────────────────────────
+
+let db = null;
+let firebaseReady = false;
+let pushTimeout = null;
+
+function pushToFirebase() {
+    if (!firebaseReady) return;
+    clearTimeout(pushTimeout);
+    pushTimeout = setTimeout(() => {
+        const all = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k.startsWith('planner:') && !k.startsWith('planner:archive-')) {
+                all[k.replace('planner:', '')] = localStorage.getItem(k);
+            }
+        }
+        db.ref('plannerState').set(all)
+          .then(() => { document.getElementById('syncStatus').innerText = 'synced ✓'; })
+          .catch(() => { document.getElementById('syncStatus').innerText = 'sync error'; });
+    }, 600);
+}
+
+function initFirebase() {
+    // No config pasted — render immediately from localStorage
+    if (!firebaseConfig.databaseURL) {
+        document.getElementById('syncStatus').innerText = 'local only';
+        renderAll();
+        return;
+    }
+
+    // Fallback: if Firebase hasn't responded in 4 seconds, render from localStorage
+    const fallback = setTimeout(() => {
+        document.getElementById('syncStatus').innerText = 'offline — using local data';
+        renderAll();
+    }, 4000);
+
+    try {
+        db = firebase.database();
+
+        let firstLoad = true;
+
+        db.ref('plannerState').on('value', snapshot => {
+
+            // Write remote data into localStorage
+            const remote = snapshot.val();
+            if (remote) {
+                Object.keys(remote).forEach(k => {
+                    localStorage.setItem('planner:' + k, remote[k]);
+                });
+            }
+
+            if (firstLoad) {
+                // First response: clear fallback, render everything now that
+                // localStorage is up to date with Firebase
+                firstLoad = false;
+                clearTimeout(fallback);
+                firebaseReady = true;
+                document.getElementById('syncStatus').innerText = 'synced ✓';
+                renderAll();
+            } else {
+                // Subsequent update from another device.
+                // Only reload if not actively editing (no edit in last 60 seconds)
+                if (Date.now() - lastEditTime > 60000) {
+                    document.getElementById('syncStatus').innerText = 'updating…';
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    document.getElementById('syncStatus').innerText = 'update ready — reload when done';
+                }
+            }
+        });
+
+    } catch(e) {
+        clearTimeout(fallback);
+        document.getElementById('syncStatus').innerText = 'sync error';
+        console.error(e);
+        renderAll();
+    }
+}
+
+// ── RENDER (called once, after Firebase has written to localStorage) ──────────
+
+let hasRendered = false;
+
+function renderAll() {
+    if (hasRendered) return;
+    hasRendered = true;
+
+    // Static left-box fields — now populated from up-to-date localStorage
+    document.querySelectorAll('[data-key]').forEach(el => persist(el, el.dataset.key));
+
+    // Quote
+    const quotes = [
+        "The mind is for having ideas, not holding them. — David Allen",
+        "You fall to the level of your systems. — James Clear",
+        "Focus is deciding what not to do. — John Carmack"
+    ];
+    document.getElementById('quote').innerText = quotes[Math.floor(Date.now() / 604800000) % quotes.length];
+
+    // Mark today
+    const dayMap = ["weekend","mon","tue","wed","thu","fri","weekend"];
+    document.getElementById(dayMap[new Date().getDay()]).classList.add('today');
+
+    // Build day columns
+    createDay(document.getElementById('mon'),     'Monday',    'mon');
+    createDay(document.getElementById('tue'),     'Tuesday',   'tue');
+    createDay(document.getElementById('wed'),     'Wednesday', 'wed');
+    createDay(document.getElementById('thu'),     'Thursday',  'thu');
+    createDay(document.getElementById('fri'),     'Friday',    'fri');
+    createDay(document.getElementById('weekend'), 'Weekend',   'weekend');
+
+    // Build log
+    initLog();
+
+    // Hour highlight
+    highlight();
+    setInterval(highlight, 60000);
+
+    // Timer
+    updateTimer();
+
+    // Notification permission (quiet — on first click)
+    if ('Notification' in window && Notification.permission === 'default') {
+        document.body.addEventListener('click', () => {
+            if (Notification.permission === 'default') Notification.requestPermission();
+        }, { once: true });
+    }
+}
+
+// ── HOUR HIGHLIGHT ────────────────────────────────────────────────────────────
+
+function highlight() {
+    document.querySelectorAll('.time-block').forEach(t => t.classList.remove('active'));
+    const h = new Date().getHours().toString();
+    const hours = ["10","11","12","13","14","15"];
+    const i = hours.indexOf(h);
+    if (i !== -1) {
+        const today = document.querySelector('.day.today');
+        if (today) {
+            const blocks = today.querySelectorAll('.time-block');
+            if (blocks[i]) blocks[i].classList.add('active');
+        }
+    }
+}
+
+// ── DAYS & TASKS ──────────────────────────────────────────────────────────────
+
+const dayOrder = ["mon","tue","wed","thu","fri","weekend"];
+
+function createCircles(pomo, taskKey) {
+    const savedState = load(taskKey + '-pomo', '000000');
+    for (let i = 0; i < 6; i++) {
+        const s = document.createElement('span');
+        if (savedState[i] === '1') s.classList.add('filled');
+        s.onclick = () => {
+            s.classList.toggle('filled');
+            const state = Array.from(pomo.querySelectorAll('span'))
+                .map(c => c.classList.contains('filled') ? '1' : '0').join('');
+            save(taskKey + '-pomo', state);
+        };
+        pomo.appendChild(s);
+    }
+}
+
+function carryForward(dayKey, sectionKey, index) {
+    const taskKey = `${dayKey}-${sectionKey}-${index}`;
+    const text = load(taskKey + '-text', '');
+    if (!text) return;
+    const di = dayOrder.indexOf(dayKey);
+    const nextDay = dayOrder[(di + 1) % dayOrder.length];
+    for (let i = 0; i < 2; i++) {
+        const targetKey = `${nextDay}-${sectionKey}-${i}`;
+        if (!load(targetKey + '-text', '')) {
+            save(targetKey + '-text', text);
+            save(targetKey + '-target', load(taskKey + '-target', ''));
+            save(targetKey + '-pomo', '000000');
+            // Update visible text field
+            const targetEl = document.querySelector(`[data-task-key="${targetKey}"] span[contenteditable]`);
+            if (targetEl) targetEl.innerText = text;
+            // Refresh pomo circles
+            const targetPomo = document.querySelector(`[data-task-key="${targetKey}"] .pomo`);
+            if (targetPomo) { targetPomo.innerHTML = ''; createCircles(targetPomo, targetKey); }
+            return;
+        }
+    }
+    alert('No empty slot in ' + nextDay + ' ' + sectionKey + ' — clear one first.');
+}
+
+function addTask(parent, taskKey, dayKey, sectionKey, index) {
+    const t = document.createElement('div');
+    t.className = 'task';
+    t.dataset.taskKey = taskKey;
+
+    const txt = document.createElement('span');
+    txt.contentEditable = true;
+    persist(txt, taskKey + '-text');
+
+    const tar = document.createElement('input');
+    tar.type = 'number';
+    tar.className = 'target';
+    persist(tar, taskKey + '-target');
+
+    const pmo = document.createElement('div');
+    pmo.className = 'pomo';
+    createCircles(pmo, taskKey);
+
+    const carryBtn = document.createElement('button');
+    carryBtn.className = 'carry';
+    carryBtn.title = 'Carry to next day';
+    carryBtn.innerText = '→';
+    carryBtn.onclick = () => carryForward(dayKey, sectionKey, index);
+
+    t.append(txt, tar, pmo, carryBtn);
+    parent.appendChild(t);
+}
+
+function createDay(el, name, dayKey) {
+    el.innerHTML = `<h4>${name}</h4>`;
+    ["10","11","12","13","14","15"].forEach(h => {
+        const block = document.createElement('div');
+        block.className = 'time-block';
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'time';
+        timeDiv.innerText = `${h}:00`;
+        const inputDiv = document.createElement('div');
+        inputDiv.contentEditable = true;
+        inputDiv.className = 'input';
+        persist(inputDiv, `${dayKey}-time-${h}`);
+        block.append(timeDiv, inputDiv);
+        el.appendChild(block);
+    });
+    [
+        { key: 'mit',        label: 'Most Important Task' },
+        { key: 'secondary',  label: 'Secondary Tasks'     },
+        { key: 'additional', label: 'Additional Tasks'    }
+    ].forEach(sec => {
+        const w = document.createElement('div');
+        w.className = 'section';
+        w.innerHTML = `<b>${sec.label}</b>`;
+        for (let i = 0; i < 2; i++) addTask(w, `${dayKey}-${sec.key}-${i}`, dayKey, sec.key, i);
+        el.appendChild(w);
+    });
+}
+
+// ── LOG ───────────────────────────────────────────────────────────────────────
+
+function saveLog() {
+    const entries = document.querySelectorAll('#log .entry');
+    save('log', Array.from(entries).map(e => e.innerText).join('\n'));
+}
+
+function initLog() {
+    const log = document.getElementById('log');
+    const saved = load('log', '');
+    const lines = saved ? saved.split('\n') : [];
+    const total = Math.max(30, lines.length);
+    for (let i = 0; i < total; i++) {
+        const e = document.createElement('div');
+        e.className = 'entry';
+        e.contentEditable = true;
+        if (lines[i]) e.innerText = lines[i];
+        e.addEventListener('input', saveLog);
+        log.appendChild(e);
+    }
+}
+
+function addQuick() {
+    const input = document.getElementById('quickInput');
+    const val = input.value.trim();
+    if (!val) return;
+    const log = document.getElementById('log');
+    const e = document.createElement('div');
+    e.className = 'entry';
+    e.contentEditable = true;
+    e.innerText = val;
+    e.addEventListener('input', saveLog);
+    log.appendChild(e);
+    input.value = '';
+    saveLog();
+}
+
+// ── CLEAR WEEK ────────────────────────────────────────────────────────────────
+
+function clearWeek() {
+    if (!confirm('Archive the current week and clear the board?')) return;
+    const archiveDate = new Date().toISOString().slice(0, 10);
+    const snapshot = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k.startsWith('planner:') && !k.startsWith('planner:archive-')) {
+            snapshot[k.replace('planner:', '')] = localStorage.getItem(k);
+        }
+    }
+    try { localStorage.setItem('planner:archive-' + archiveDate, JSON.stringify(snapshot)); } catch(e) {}
+    if (firebaseReady) db.ref('plannerArchive/' + archiveDate).set(snapshot);
+
+    Object.keys(snapshot).forEach(k => {
+        if (k.startsWith('mon-') || k.startsWith('tue-') || k.startsWith('wed-') ||
+            k.startsWith('thu-') || k.startsWith('fri-') || k.startsWith('weekend-') ||
+            k === 'log') {
+            localStorage.removeItem('planner:' + k);
+        }
+    });
+    pushToFirebase();
+    location.reload();
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+
+let timerInterval = null;
+let seconds = parseInt(load('timer-seconds', '1500'));
+let audioCtx = null;
+
+function beep() {
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    } catch(e) {}
+}
+
+function timerComplete() {
+    document.getElementById('timerBox').classList.add('alert');
+    beep();
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Pomodoro complete', { body: 'Time to take a break.' });
+    }
+}
+
+function updateTimer() {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    const display = `${m}:${s.toString().padStart(2, '0')}`;
+    document.getElementById('time').innerText = display;
+    document.getElementById('topTime').innerText = display;
+    save('timer-seconds', seconds);
+}
+
+function startTimer() {
+    if (timerInterval) return;
+    document.getElementById('timerBox').classList.remove('alert');
+    timerInterval = setInterval(() => {
+        if (seconds > 0) {
+            seconds--;
+            updateTimer();
+            if (seconds === 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerComplete();
+            }
+        }
+    }, 1000);
+}
+
+function pauseTimer() { clearInterval(timerInterval); timerInterval = null; }
+
+function resetTimer() {
+    pauseTimer();
+    seconds = 1500;
+    document.getElementById('timerBox').classList.remove('alert');
+    updateTimer();
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+
+function initAuth() {
+    firebase.initializeApp(firebaseConfig);
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const overlay  = document.getElementById('signinOverlay');
+
+    document.getElementById('signinBtn').onclick = () => {
+        firebase.auth().signInWithPopup(provider)
+            .catch(() => {
+                document.getElementById('syncStatus').innerText = 'sign-in failed';
+            });
+    };
+
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            // Signed in — hide overlay and load data
+            overlay.style.display = 'none';
+            document.getElementById('syncStatus').innerText = user.email;
+            initFirebase();
+        } else {
+            // Not signed in — show overlay
+            overlay.style.display = 'flex';
+        }
+    });
+}
+
+function signOut() {
+    firebase.auth().signOut();
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+
+initAuth();
+
+</script>
+</body>
+</html>
