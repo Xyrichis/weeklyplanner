@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Planner">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f8f9f7">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAB9klEQVR42u3dsQ3CMBBAUQexT0q6dKRlEETFHFSIQaiZgK1YAEUnpAtneK9GtoW/IDTcME5zg3c23gLEgTgQB+JAHIgDcSAOxIE4QByIA3EgDsSBOBAH4kAciAPEgTgQB+JAHIgDcSAOxIE4QByIA3EgDsSBOBAH4kAciANxgDgQB+Ig0zZ19eP1nLf47XSJvOz5uOedYbc/9HKGWp8cqWUE10+9leD6Fc5QK47sMiK7ZN9KZJcKZ6gVxzplLO+1zq0s71XhDB5I8WsFcSAOxIE4EAfiAHEgDsSBOBAH4kAciANxIA7EAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4uCn4wj+z1/qXnn/sRffq8IZKn5yrNPH8i7r3M3yLhXOUPFrJbuPyPrZdxNZv8IZPjOM0+zLFQ+kiANxIA7EgTgQB+KgmdTUys2JaV1NSTKpyZSkZlJTiTJ6mZJkUpMpSSY14dcKiANxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4gBxIA7EgTgQB+JAHIgDcSAOEAdficOUpGZSkylJJjUV7aOXKUkmNeGZA3GAOBAH4kAciANxIA7EgTgQB+IAcSAOxIE4EAfiQByIA3EgDhAH4kAciANxIA7EgTgQB+IAcSAOxIE4EAfiQByIA3HwF168IIGDKWoZAAAAAABJRU5ErkJggg==">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAB9klEQVR42u3dsQ3CMBBAUQexT0q6dKRlEETFHFSIQaiZgK1YAEUnpAtneK9GtoW/IDTcME5zg3c23gLEgTgQB+JAHIgDcSAOxIE4QByIA3EgDsSBOBAH4kAciAPEgTgQB+JAHIgDcSAOxIE4QByIA3EgDsSBOBAH4kAciANxgDgQB+Ig0zZ19eP1nLf47XSJvOz5uOedYbc/9HKGWp8cqWUE10+9leD6Fc5QK47sMiK7ZN9KZJcKZ6gVxzplLO+1zq0s71XhDB5I8WsFcSAOxIE4EAfiAHEgDsSBOBAH4kAciANxIA7EAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4uCn4wj+z1/qXnn/sRffq8IZKn5yrNPH8i7r3M3yLhXOUPFrJbuPyPrZdxNZv8IZPjOM0+zLFQ+kiANxIA7EgTgQB+KgmdTUys2JaV1NSTKpyZSkZlJTiTJ6mZJkUpMpSSY14dcKiANxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4gBxIA7EgTgQB+JAHIgDcSAOEAdficOUpGZSkylJJjUV7aOXKUkmNeGZA3GAOBAH4kAciANxIA7EgTgQB+IAcSAOxIE4EAfiQByIA3EgDhAH4kAciANxIA7EgTgQB+IAcSAOxIE4EAfiQByIA3HwF168IIGDKWoZAAAAAABJRU5ErkJggg==">
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 <title>Weekly Planner</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -127,7 +134,29 @@ h4 small { font-weight: 400; color: var(--dots); font-size: 12px; margin-left: 4
     font-size: 12px;
     padding: 0 2px;
 }
-.carry:hover { color: var(--text); }
+.carry:hover, .pick:hover { color: var(--text); }
+.pick {
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--dots);
+    font-size: 12px;
+    padding: 0 2px;
+    margin: 0;
+}
+.done-box { margin: 0; width: 12px; height: 12px; flex: none; cursor: pointer; }
+.task.done span[contenteditable] { text-decoration: line-through; opacity: 0.55; }
+.task.current { background: var(--hour); box-shadow: inset 3px 0 0 var(--text); }
+.task.current .pick { color: var(--text); }
+.timer-label {
+    font-size: 11px;
+    color: var(--dots);
+    min-height: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.topbar-timer .timer-label { max-width: 120px; font-weight: normal; }
 
 /* LOG */
 .log { flex: 1; overflow-y: auto; }
@@ -234,7 +263,10 @@ button {
     .section { margin-top: 16px; }
     .section b { font-size: 16px; }
     .task { flex-wrap: wrap; padding-bottom: 6px; }
-    .task span[contenteditable] { flex: 1 1 100%; }
+    .task span[contenteditable] { flex: 1 1 calc(100% - 90px); }
+    .done-box { width: 24px; height: 24px; }
+    .pick { font-size: 22px; padding: 2px 8px; }
+    .timer-label { font-size: 13px; }
     .target { width: 56px; font-size: 16px; padding: 4px; }
     .pomo span { width: 22px; height: 22px; margin: 3px; }
     .carry { font-size: 22px; padding: 2px 10px; margin-left: auto; }
@@ -316,6 +348,7 @@ button {
     </div>
     <span id="syncStatus">connecting…</span>
     <div class="topbar-timer">
+        <span class="timer-label" id="topLabel"></span>
         <span id="topTime">25:00</span>
         <button onclick="startTimer()">▶</button>
         <button onclick="pauseTimer()">⏸</button>
@@ -349,6 +382,7 @@ button {
 
     <div class="box timer" id="timerBox">
         <div id="time">25:00</div>
+        <div class="timer-label" id="timerLabel"></div>
         <button onclick="startTimer()">Start</button>
         <button onclick="pauseTimer()">Pause</button>
         <button onclick="resetTimer()">Reset</button>
@@ -399,6 +433,7 @@ button {
     <div class="controls">
         <div class="control-btn" onclick="toggleTheme()">Light / Dark Mode</div>
         <div class="control-btn" onclick="toggleView()">Week / Today View</div>
+        <div class="control-btn" onclick="bringForward()">Bring Forward Unfinished</div>
         <div class="control-btn" onclick="openArchives()">Cleared Weeks</div>
         <div class="control-btn danger" onclick="clearWeek()">Clear Week (archives first)</div>
         <div class="control-btn" onclick="signOut()">Sign Out<small id="userEmail"></small></div>
@@ -425,6 +460,8 @@ const firebaseConfig = {
 // Hours shown in each day. Change the first and last hour here.
 const FIRST_HOUR = 8, LAST_HOUR = 18;
 const POMODORO_SECONDS = 1500;
+// A break of BREAK_SECONDS starts automatically after every POMODOROS_PER_BREAK Pomodoros.
+const BREAK_SECONDS = 900, POMODOROS_PER_BREAK = 2;
 
 const HOURS = [];
 for (let h = FIRST_HOUR; h <= LAST_HOUR; h++) HOURS.push(h);
@@ -597,12 +634,21 @@ function startSync() {
         refreshStatus();
     });
     db.ref('plannerMeta/timer').on('value', snap => {
-        const t = snap.val();
-        if (t && t.updatedAt > timer.updatedAt) {
-            timer = { remaining: +t.remaining || 0, endsAt: t.endsAt || null, updatedAt: t.updatedAt };
+        if (!snap.val()) return;
+        const t = normTimer(snap.val());
+        if (t.updatedAt > timer.updatedAt) {
+            timer = t;
             lsSet('timer', JSON.stringify(timer));
-            lastLeft = timerLeft();
+            announce(timer.finishedAt);
             renderTimer();
+        }
+    }, () => {});
+    db.ref('plannerMeta/current').on('value', snap => {
+        const c = snap.val();
+        if (c && c.updatedAt > current.updatedAt) {
+            current = { week: c.week || null, key: c.key || null, updatedAt: c.updatedAt };
+            lsSet('current', JSON.stringify(current));
+            renderCurrent();
         }
     }, () => {});
     attachWeek();
@@ -663,7 +709,7 @@ async function migrateLegacy() {
 const fields = {};
 
 function cleanText(el) {
-    const t = el.innerText.replace(/\s*\n\s*/g, ' ');
+    const t = el.innerText.replace(/\u00a0/g, ' ').replace(/\s*\n\s*/g, ' ');
     return t.trim() === '' ? '' : t;
 }
 
@@ -674,6 +720,9 @@ function applyField(key) {
     const v = weekData(viewWeek)[key] || '';
     if (f.type === 'pomo') {
         f.el.querySelectorAll('span').forEach((s, i) => s.classList.toggle('filled', v[i] === '1'));
+    } else if (f.type === 'done') {
+        f.el.checked = v === '1';
+        f.el.parentElement.classList.toggle('done', v === '1');
     } else if (document.activeElement === f.el) {
         return;                                   // don't disturb typing; refreshed on blur
     } else if (f.type === 'num') {
@@ -758,6 +807,19 @@ function buildDay(di) {
             const t = document.createElement('div');
             t.className = 'task';
 
+            const done = document.createElement('input');
+            done.type = 'checkbox';
+            done.className = 'done-box';
+            done.title = 'Done — adds it to What I Actually Did';
+            fields[taskKey + '-done'] = { el: done, type: 'done' };
+            done.addEventListener('change', () => toggleDone(taskKey, done.checked));
+
+            const pick = document.createElement('button');
+            pick.className = 'pick';
+            pick.title = 'Work on this — the timer fills its circles';
+            pick.innerText = '▸';
+            pick.onclick = () => pickTask(taskKey);
+
             const txt = document.createElement('span');
             txt.contentEditable = true;
             bindText(txt, taskKey + '-text');
@@ -778,7 +840,7 @@ function buildDay(di) {
             carryBtn.innerText = '→';
             carryBtn.onclick = () => carryForward(di, sec, i);
 
-            t.append(txt, tar, pmo, carryBtn);
+            t.append(done, pick, txt, tar, pmo, carryBtn);
             w.appendChild(t);
         }
         el.appendChild(w);
@@ -840,6 +902,7 @@ function showWeek(id) {
     });
     markToday();
     applyAll();
+    renderCurrent();
     attachWeek();
 }
 
@@ -910,13 +973,115 @@ async function carryForward(di, sec, index) {
         if (!to[dest + '-text']) {
             setVal(week, dest + '-text', text);
             setVal(week, dest + '-target', target);
-            setVal(week, dest + '-pomo', '');
-            if (week === viewWeek) ['-text', '-target', '-pomo'].forEach(s => applyField(dest + s));
+            ['-pomo', '-done', '-logged'].forEach(s => setVal(week, dest + s, ''));
+            if (week === viewWeek) ['-text', '-target', '-pomo', '-done'].forEach(s => applyField(dest + s));
             toast(`Carried to ${where}`);
             return;
         }
     }
     toast(`No empty slot under ${sec.label} on ${where} — clear one first.`);
+}
+
+// ── DONE TICK ─────────────────────────────────────────────────────────────────
+// Ticking a task copies it, with its Pomodoro count, to the first empty line of
+// What I Actually Did. Unticking removes that line if it has not been edited.
+
+function toggleDone(taskKey, on) {
+    const d = weekData(viewWeek);
+    const text = d[taskKey + '-text'];
+    if (on && text) {
+        const n = ((d[taskKey + '-pomo'] || '').match(/1/g) || []).length;
+        const entry = text + (n ? ` (${n} pomodoro${n === 1 ? '' : 's'})` : '');
+        let i = 0;
+        while (d['log-' + i]) i++;
+        setVal(viewWeek, 'log-' + i, entry);
+        setVal(viewWeek, taskKey + '-logged', i + '|' + entry);
+        setVal(viewWeek, taskKey + '-done', '1');
+        applyField('log-' + i);
+    } else if (!on) {
+        const ref = d[taskKey + '-logged'];
+        if (ref) {
+            const p = ref.indexOf('|'), line = 'log-' + ref.slice(0, p);
+            if (d[line] === ref.slice(p + 1)) { setVal(viewWeek, line, ''); applyField(line); }
+            setVal(viewWeek, taskKey + '-logged', '');
+        }
+        setVal(viewWeek, taskKey + '-done', '');
+    }
+    applyField(taskKey + '-done');
+}
+
+// ── BRING FORWARD UNFINISHED ──────────────────────────────────────────────────
+// Copies every unticked task from the previous week into the week on screen,
+// into the same section, starting from today (or Monday for another week).
+
+async function bringForward() {
+    const prev = shiftWeek(viewWeek, -1);
+    if (db && authed && connected) {
+        try { applyRemote(prev, (await db.ref('plannerWeeks/' + prev).once('value')).val()); } catch (e) {}
+    }
+    const from = weekData(prev), to = weekData(viewWeek);
+    const startDay = viewWeek === knownCurrent ? [5, 0, 1, 2, 3, 4, 5][new Date().getDay()] : 0;
+    let found = 0, moved = 0, noRoom = 0;
+    SECTIONS.forEach(sec => {
+        const have = new Set();
+        DAYS.forEach(d => { for (let i = 0; i < 2; i++) {
+            const t = to[`${d.key}-${sec.key}-${i}-text`];
+            if (t) have.add(t.trim().toLowerCase());
+        }});
+        DAYS.forEach(d => { for (let i = 0; i < 2; i++) {
+            const src = `${d.key}-${sec.key}-${i}`;
+            const text = from[src + '-text'];
+            if (!text || from[src + '-done']) continue;
+            found++;
+            if (have.has(text.trim().toLowerCase())) continue;
+            let placed = false;
+            for (let di = startDay; di < DAYS.length && !placed; di++) {
+                for (let j = 0; j < 2 && !placed; j++) {
+                    const dest = `${DAYS[di].key}-${sec.key}-${j}`;
+                    if (to[dest + '-text']) continue;
+                    setVal(viewWeek, dest + '-text', text);
+                    setVal(viewWeek, dest + '-target', from[src + '-target'] || '');
+                    ['-pomo', '-done', '-logged'].forEach(s => setVal(viewWeek, dest + s, ''));
+                    placed = true;
+                }
+            }
+            if (placed) { moved++; have.add(text.trim().toLowerCase()); } else noRoom++;
+        }});
+    });
+    applyAll();
+    if (!found) toast('No unfinished tasks in the previous week.');
+    else if (!moved && !noRoom) toast('Those tasks are already in this week.');
+    else toast(`Brought forward ${moved} task${moved === 1 ? '' : 's'}` + (noRoom ? ` — ${noRoom} did not fit; free up slots and try again` : ''));
+}
+
+// ── CURRENT TASK ──────────────────────────────────────────────────────────────
+// The task the timer is working on. A finished Pomodoro fills its next circle.
+
+let current = Object.assign({ week: null, key: null, updatedAt: 0 }, lsJSON('current', {}));
+
+function currentTaskText() {
+    return current.key ? (weekData(current.week)[current.key + '-text'] || '') : '';
+}
+function pickTaskRef() {
+    if (!current.key) return null;
+    const state = (weekData(current.week)[current.key + '-pomo'] || '').padEnd(6, '0');
+    return { week: current.week, key: current.key, idx: state.indexOf('0') };
+}
+function pickTask(taskKey) {
+    const same = current.key === taskKey && current.week === viewWeek;
+    if (!same && !weekData(viewWeek)[taskKey + '-text']) { toast('Type the task first.'); return; }
+    current = same ? { week: null, key: null } : { week: viewWeek, key: taskKey };
+    current.updatedAt = Date.now();
+    lsSet('current', JSON.stringify(current));
+    if (db && authed) db.ref('plannerMeta/current').set(current).catch(() => {});
+    if (timer.endsAt && timer.mode === 'work') { timer.task = pickTaskRef(); saveTimer(); }
+    renderCurrent();
+}
+function renderCurrent() {
+    document.querySelectorAll('.task.current').forEach(t => t.classList.remove('current'));
+    const f = current.key && current.week === viewWeek && fields[current.key + '-text'];
+    if (f) f.el.parentElement.classList.add('current');
+    renderTimer();
 }
 
 // ── LOG ───────────────────────────────────────────────────────────────────────
@@ -972,7 +1137,7 @@ function describe(data) {
                 if (!data[k + '-text']) continue;
                 const done = (data[k + '-pomo'] || '').split('1').length - 1;
                 const target = data[k + '-target'];
-                add(`${day.name} · ${sec.label}`, data[k + '-text'] + (target || done ? ` (${done}${target ? ' of ' + target : ''} pomodoros)` : ''));
+                add(`${day.name} · ${sec.label}`, (data[k + '-done'] ? '✓ ' : '') + data[k + '-text'] + (target || done ? ` (${done}${target ? ' of ' + target : ''} pomodoros)` : ''));
             }
         });
     });
@@ -1033,21 +1198,39 @@ function closeArchives() { document.getElementById('archiveOverlay').style.displ
 
 // ── TIMER ─────────────────────────────────────────────────────────────────────
 // The timer stores the time it will finish rather than counting down, so it
-// stays accurate in a background tab and is written only on start/pause/reset.
+// stays accurate in a background tab and is written only when its state changes.
+// What happens at the finish is worked out from the shared state alone, so two
+// open devices reach the same result and a circle is only ever filled once.
 
-let timer = Object.assign({ remaining: POMODORO_SECONDS, endsAt: null, updatedAt: 0 }, lsJSON('timer', {}));
-let lastLeft = null;
+const dayStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+function normTimer(t) {
+    t = t || {};
+    return {
+        mode: t.mode === 'break' ? 'break' : 'work',
+        remaining: t.remaining == null ? POMODORO_SECONDS : +t.remaining,
+        endsAt: t.endsAt || null,
+        updatedAt: +t.updatedAt || 0,
+        task: t.task && t.task.key ? { week: t.task.week, key: t.task.key, idx: +t.task.idx } : null,
+        count: +t.count || 0,           // Pomodoros completed on `day`
+        day: t.day || '',
+        alert: !!t.alert,
+        finishedAt: +t.finishedAt || 0
+    };
+}
+
+let timer = normTimer(lsJSON('timer', {}));
 let audioCtx = null;
+let announced = 0;
 
 function timerLeft() {
     return timer.endsAt ? Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000)) : timer.remaining;
 }
 
-function saveTimer() {
-    timer.updatedAt = Date.now();
+function saveTimer(stamp) {
+    timer.updatedAt = stamp || Date.now();
     lsSet('timer', JSON.stringify(timer));
     if (db && authed) db.ref('plannerMeta/timer').set(timer).catch(() => {});
-    lastLeft = timerLeft();
     renderTimer();
 }
 
@@ -1066,23 +1249,60 @@ function beep() {
     } catch (e) {}
 }
 
+// Sound and notification, once per finish, and only if it has just happened.
+function announce(finishedAt) {
+    if (!finishedAt || finishedAt === announced || Date.now() - finishedAt > 5000) return;
+    announced = finishedAt;
+    beep();
+    const msg = timer.mode === 'break' ? `Pomodoro complete — ${Math.round(BREAK_SECONDS / 60)}-minute break started`
+              : timer.remaining === 0  ? 'Pomodoro complete'
+              : 'Break over — ready for the next Pomodoro';
+    toast(msg);
+    try {
+        if ('Notification' in window && Notification.permission === 'granted') new Notification(msg);
+    } catch (e) {}
+}
+
+function creditTask(t) {
+    if (!t || !(t.idx >= 0 && t.idx < 6)) return;
+    const state = (weekData(t.week)[t.key + '-pomo'] || '').padEnd(6, '0').split('');
+    if (state[t.idx] === '1') return;
+    state[t.idx] = '1';
+    setVal(t.week, t.key + '-pomo', state.join(''));
+    if (t.week === viewWeek) applyField(t.key + '-pomo');
+}
+
+function finishTimer() {
+    const end = timer.endsAt;
+    if (timer.mode === 'work') {
+        creditTask(timer.task);
+        const day = dayStr(new Date(end));
+        const count = (timer.day === day ? timer.count : 0) + 1;
+        const base = { task: null, count, day, finishedAt: end };
+        timer = count % POMODOROS_PER_BREAK === 0
+            ? Object.assign(base, { mode: 'break', remaining: BREAK_SECONDS, endsAt: end + BREAK_SECONDS * 1000, alert: false })
+            : Object.assign(base, { mode: 'work', remaining: 0, endsAt: null, alert: true });
+    } else {
+        timer = { mode: 'work', remaining: POMODORO_SECONDS, endsAt: null, alert: true,
+                  task: null, count: timer.count, day: timer.day, finishedAt: end };
+    }
+    saveTimer(end);
+    announce(end);
+}
+
 function renderTimer() {
+    if (timer.endsAt && Date.now() >= timer.endsAt) { finishTimer(); return; }
     const left = timerLeft();
     const display = `${Math.floor(left / 60)}:${pad(left % 60)}`;
+    const label = timer.mode === 'break' ? 'Break'
+                : timer.alert && timer.remaining > 0 ? 'Break over'
+                : currentTaskText();
     document.getElementById('time').innerText = display;
     document.getElementById('topTime').innerText = display;
-    const finished = !!timer.endsAt && left === 0;
-    document.body.classList.toggle('timer-alert', finished);
-    document.title = timer.endsAt ? `${display} · Weekly Planner` : 'Weekly Planner';
-    if (finished && lastLeft !== null && lastLeft > 0) {
-        beep();
-        try {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('Pomodoro complete', { body: 'Time to take a break.' });
-            }
-        } catch (e) {}
-    }
-    lastLeft = left;
+    document.getElementById('timerLabel').innerText = label;
+    document.getElementById('topLabel').innerText = label;
+    document.body.classList.toggle('timer-alert', timer.alert);
+    document.title = timer.endsAt ? `${display} · ${timer.mode === 'break' ? 'Break' : 'Weekly Planner'}` : 'Weekly Planner';
 }
 
 function startTimer() {
@@ -1091,18 +1311,22 @@ function startTimer() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
     } catch (e) {}
-    if (timer.endsAt && timerLeft() > 0) return;  // already running
-    const left = timerLeft() || POMODORO_SECONDS;
-    timer = { remaining: left, endsAt: Date.now() + left * 1000, updatedAt: 0 };
+    if (timer.endsAt) return;                     // already running
+    let mode = timer.mode, left = timer.remaining;
+    if (left <= 0) { mode = 'work'; left = POMODORO_SECONDS; }
+    timer = Object.assign({}, timer, {
+        mode, remaining: left, endsAt: Date.now() + left * 1000,
+        task: mode === 'work' ? pickTaskRef() : null, alert: false, finishedAt: 0
+    });
     saveTimer();
 }
 function pauseTimer() {
     if (!timer.endsAt) return;
-    timer = { remaining: timerLeft(), endsAt: null, updatedAt: 0 };
+    timer = Object.assign({}, timer, { remaining: timerLeft(), endsAt: null });
     saveTimer();
 }
-function resetTimer() {
-    timer = { remaining: POMODORO_SECONDS, endsAt: null, updatedAt: 0 };
+function resetTimer() {                           // also cancels a break
+    timer = Object.assign({}, timer, { mode: 'work', remaining: POMODORO_SECONDS, endsAt: null, task: null, alert: false });
     saveTimer();
 }
 
