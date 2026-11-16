@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 <title>Weekly Planner</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -36,6 +37,8 @@ body {
     margin: 10px;
     background: var(--bg);
     color: var(--text);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 /* LAYOUT */
@@ -43,7 +46,7 @@ body {
     display: grid;
     grid-template-columns: 240px 1fr 260px;
     gap: 10px;
-    height: 95vh;
+    height: calc(100vh - 60px);
 }
 .left, .right {
     display: flex;
@@ -60,10 +63,13 @@ body {
 /* HEADINGS */
 h3 { margin: 3px 0; font-size: 16px; font-weight: 600; }
 h4 { margin: 3px 0; font-size: 15px; font-weight: 600; }
+h4 small { font-weight: 400; color: var(--dots); font-size: 12px; margin-left: 4px; }
 .line {
     border-bottom: 1px dotted var(--dots);
-    height: 18px;
+    min-height: 18px;
 }
+[contenteditable] { outline: none; overflow-wrap: anywhere; }
+[contenteditable]:focus { background: var(--highlight); }
 
 /* WEEK */
 .week {
@@ -85,7 +91,7 @@ h4 { margin: 3px 0; font-size: 15px; font-weight: 600; }
 /* TIME */
 .time-block { display: flex; font-size: 11px; }
 .time { width: 45px; color: var(--dots); }
-.input { flex: 1; border-bottom: 1px dotted var(--dots); }
+.input { flex: 1; border-bottom: 1px dotted var(--dots); min-height: 13px; }
 .time-block.active {
     background: var(--hour);
     border-left: 3px solid var(--text);
@@ -100,8 +106,9 @@ h4 { margin: 3px 0; font-size: 15px; font-weight: 600; }
     font-size: 11px;
     border-bottom: 1px dotted var(--dots);
 }
-.task span[contenteditable] { flex: 1; }
+.task span[contenteditable] { flex: 1; min-height: 14px; }
 .target { width: 35px; }
+.pomo { white-space: nowrap; }
 .pomo span {
     display: inline-block;
     width: 10px;
@@ -124,11 +131,11 @@ h4 { margin: 3px 0; font-size: 15px; font-weight: 600; }
 
 /* LOG */
 .log { flex: 1; overflow-y: auto; }
-.entry { border-bottom: 1px dotted var(--dots); height: 18px; display: block; }
+.entry { border-bottom: 1px dotted var(--dots); min-height: 18px; display: block; }
 
 /* TIMER */
 .timer { text-align: center; font-size: 16px; }
-.timer.alert #time { color: var(--alert); animation: pulse 1s infinite; }
+.timer-alert #time, .timer-alert #topTime { color: var(--alert); animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 button {
@@ -138,6 +145,7 @@ button {
     color: var(--text);
     padding: 2px 6px;
     cursor: pointer;
+    font-family: inherit;
 }
 
 /* QUOTE */
@@ -159,14 +167,18 @@ button {
     text-align: center;
 }
 .control-btn.danger:hover { border-color: var(--alert); color: var(--alert); }
+.control-btn small { display: block; color: var(--dots); font-size: 10px; overflow-wrap: anywhere; }
 
 /* TOPBAR */
 .topbar {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 5px;
     margin-bottom: 6px;
 }
+.weeknav { display: flex; align-items: center; gap: 2px; margin-left: 8px; }
+#weekLabel { font-size: 13px; font-weight: 600; min-width: 150px; text-align: center; }
 #syncStatus {
     font-size: 11px;
     color: var(--dots);
@@ -182,45 +194,126 @@ button {
 }
 .mobile .topbar-timer { display: flex; }
 
-/* TODAY / MOBILE MODE */
+/* TODAY MODE */
 .mobile .day { display: none; }
 .mobile .day.today { display: block; }
 .mobile .left { display: none; }
 .mobile .controls { display: none; }
+.mobile .weeknav { display: none; }
 .mobile .container { display: block; height: auto; }
 .mobile .week { display: block; height: auto; }
 .mobile .row { display: block; }
+.mobile .right { margin-top: 10px; }
 
-/* MOBILE MEDIA */
+/* NARROW WINDOWS */
 @media (max-width: 800px) {
-    .container { display: block; }
+    .container { display: block; height: auto; }
     .week { display: block; height: auto; }
-    .left, .right { width: 100%; }
+    .left, .right { width: 100%; margin-bottom: 10px; }
     .week .row { display: block; }
+    .day { margin-bottom: 10px; }
+    .weeknav { margin-left: 0; }
 }
 
-/* QUICK INPUT */
+/* QUICK LOG */
 .quick { display: none; }
 @media (max-width: 800px) {
     .quick { display: flex; margin-bottom: 5px; }
-    .quick input { flex: 1; padding: 5px; }
+    .quick input { flex: 1; padding: 5px; min-width: 0; }
 }
+
+/* PHONES: larger type and tap targets, text wraps instead of needing zoom */
+@media (max-width: 800px) and (pointer: coarse) {
+    body { margin: 8px; font-size: 16px; }
+    h3, h4 { font-size: 19px; margin: 6px 0; }
+    h4 small { font-size: 14px; }
+    .box, .day { padding: 10px; }
+    .time-block, .task { font-size: 16px; }
+    .line, .entry, .input, .task span[contenteditable] { min-height: 32px; line-height: 32px; }
+    .time { width: 58px; line-height: 32px; }
+    .section { margin-top: 16px; }
+    .section b { font-size: 16px; }
+    .task { flex-wrap: wrap; padding-bottom: 6px; }
+    .task span[contenteditable] { flex: 1 1 100%; }
+    .target { width: 56px; font-size: 16px; padding: 4px; }
+    .pomo span { width: 22px; height: 22px; margin: 3px; }
+    .carry { font-size: 22px; padding: 2px 10px; margin-left: auto; }
+    button, .control-btn { font-size: 16px; padding: 8px 12px; }
+    .quick input { font-size: 16px; padding: 10px; }
+    #syncStatus { font-size: 13px; }
+    .topbar-timer { font-size: 18px; }
+    .quote { font-size: 20px; }
+}
+
+/* TOAST */
+#toast {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 4px;
+    max-width: 90vw;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 200;
+}
+#toast.show { opacity: 1; }
+
+/* OVERLAYS */
+.overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+#archiveOverlay { justify-content: flex-start; padding: 16px; overflow-y: auto; align-items: stretch; }
+.archive-head { display: flex; align-items: center; justify-content: space-between; }
+.archive-item { background: var(--card); border: 1px solid var(--border); padding: 8px; font-size: 13px; }
+.archive-item pre { white-space: pre-wrap; font-family: inherit; font-size: 12px; margin: 8px 0 0; display: none; }
+.archive-item.open pre { display: block; }
 
 </style>
 </head>
 <body>
 
 <!-- SIGN-IN OVERLAY -->
-<div id="signinOverlay" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:100; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+<div id="signinOverlay" class="overlay">
     <div style="font-size:20px; font-weight:600;">Weekly Planner</div>
     <div style="font-size:13px; color:var(--dots);">Sign in to load your planner</div>
     <button id="signinBtn" style="padding:8px 18px; font-size:14px;">Sign in with Google</button>
 </div>
 
+<!-- ARCHIVE OVERLAY -->
+<div id="archiveOverlay" class="overlay">
+    <div class="archive-head">
+        <h3>Cleared weeks</h3>
+        <button onclick="closeArchives()">Close</button>
+    </div>
+    <div id="archiveList"></div>
+</div>
+
+<div id="toast"></div>
+
 <!-- TOPBAR -->
 <div class="topbar">
     <button onclick="toggleTheme()">Theme</button>
     <button onclick="toggleView()">Week / Today</button>
+    <div class="weeknav">
+        <button onclick="goWeek(-1)" title="Previous week">◀</button>
+        <span id="weekLabel"></span>
+        <button onclick="goWeek(1)" title="Next week">▶</button>
+        <button id="thisWeekBtn" onclick="goThisWeek()">This week</button>
+    </div>
     <span id="syncStatus">connecting…</span>
     <div class="topbar-timer">
         <span id="topTime">25:00</span>
@@ -232,7 +325,7 @@ button {
 
 <!-- QUICK LOG -->
 <div class="quick">
-    <input id="quickInput" placeholder="What did you just do?">
+    <input id="quickInput" placeholder="What did you just do?" enterkeyhint="done">
     <button onclick="addQuick()">+</button>
 </div>
 
@@ -306,8 +399,9 @@ button {
     <div class="controls">
         <div class="control-btn" onclick="toggleTheme()">Light / Dark Mode</div>
         <div class="control-btn" onclick="toggleView()">Week / Today View</div>
+        <div class="control-btn" onclick="openArchives()">Cleared Weeks</div>
         <div class="control-btn danger" onclick="clearWeek()">Clear Week (archives first)</div>
-        <div class="control-btn" onclick="signOut()">Sign Out</div>
+        <div class="control-btn" onclick="signOut()">Sign Out<small id="userEmail"></small></div>
     </div>
 </div>
 
@@ -315,10 +409,7 @@ button {
 
 <script>
 
-// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
-// 1. Go to https://firebase.google.com → create a free project
-// 2. Enable Realtime Database (test mode)
-// 3. Add a Web App, copy the firebaseConfig object it gives you, paste below
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
 
 const firebaseConfig = {
     apiKey: "AIzaSyDuJSzlDKkBgCYfp6SGcqbq5bHyPBq1fCk",
@@ -331,139 +422,386 @@ const firebaseConfig = {
     measurementId: "G-2MYK47R1W4"
 };
 
-// ── STORAGE ───────────────────────────────────────────────────────────────────
+// Hours shown in each day. Change the first and last hour here.
+const FIRST_HOUR = 8, LAST_HOUR = 18;
+const POMODORO_SECONDS = 1500;
 
-let lastEditTime = 0;
+const HOURS = [];
+for (let h = FIRST_HOUR; h <= LAST_HOUR; h++) HOURS.push(h);
 
-function save(key, val) {
-    try { localStorage.setItem('planner:' + key, val); } catch(e) {}
-    lastEditTime = Date.now();
-    pushToFirebase();
+const DAYS = [
+    { key: 'mon', name: 'Monday' }, { key: 'tue', name: 'Tuesday' }, { key: 'wed', name: 'Wednesday' },
+    { key: 'thu', name: 'Thursday' }, { key: 'fri', name: 'Friday' }, { key: 'weekend', name: 'Weekend' }
+];
+const SECTIONS = [
+    { key: 'mit',        label: 'Most Important Task' },
+    { key: 'secondary',  label: 'Secondary Tasks'     },
+    { key: 'additional', label: 'Additional Tasks'    }
+];
+const LEFT_LABELS = {
+    intention: 'Weekly Intention', mit: 'Most Important Tasks', overview: 'Weekly Overview',
+    gratitude: 'Weekly Gratitude', affirmation: 'Weekly Affirmation'
+};
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── DATES ─────────────────────────────────────────────────────────────────────
+// A week is identified by the date of its Monday, e.g. "2026-11-16".
+
+const pad = n => String(n).padStart(2, '0');
+
+function weekIdOf(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function weekStart(id) {
+    const [y, m, d] = id.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+function shiftWeek(id, n) {
+    const d = weekStart(id);
+    d.setDate(d.getDate() + 7 * n);
+    return weekIdOf(d);
+}
+function dayDate(id, offset) {
+    const d = weekStart(id);
+    d.setDate(d.getDate() + offset);
+    return d;
+}
+const shortDate = d => `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+const weekName = id => { const d = weekStart(id); return `week of ${shortDate(d)} ${d.getFullYear()}`; };
+const weekLabel = id => 'W' + weekName(id).slice(1);
+
+// ── LOCAL STORE ───────────────────────────────────────────────────────────────
+// Each week is kept on this device and in Firebase. Every edit is marked
+// "dirty" until Firebase confirms it, so edits made offline are sent later
+// rather than lost, and only the fields actually edited are ever written.
+
+const LS = 'planner2:';
+function lsGet(k, fallback) {
+    try { const v = localStorage.getItem(LS + k); return v === null ? fallback : v; }
+    catch (e) { return fallback; }
+}
+function lsSet(k, v) { try { localStorage.setItem(LS + k, v); } catch (e) {} }
+function lsJSON(k, fallback) {
+    try { const v = JSON.parse(lsGet(k, 'null')); return v && typeof v === 'object' ? v : fallback; }
+    catch (e) { return fallback; }
 }
 
-function load(key, fallback) {
-    try {
-        const v = localStorage.getItem('planner:' + key);
-        return v !== null ? v : (fallback !== undefined ? fallback : null);
-    } catch(e) { return fallback !== undefined ? fallback : null; }
+const weeks = {};
+function weekData(id) {
+    if (!weeks[id]) weeks[id] = lsJSON('week:' + id, {});
+    return weeks[id];
+}
+function persistWeek(id) { lsSet('week:' + id, JSON.stringify(weeks[id])); }
+
+let dirty = lsJSON('dirty', {});       // "week|key" → edit number
+let inflight = {};
+let editSeq = Date.now();
+let knownCurrent = weekIdOf(new Date());
+let viewWeek = knownCurrent;
+
+function setVal(week, key, val) {
+    val = val == null ? '' : String(val);
+    const d = weekData(week);
+    if ((d[key] || '') === val) return;
+    if (val === '') delete d[key]; else d[key] = val;
+    persistWeek(week);
+    dirty[week + '|' + key] = ++editSeq;
+    lsSet('dirty', JSON.stringify(dirty));
+    scheduleFlush();
 }
 
-function persist(el, key) {
-    const saved = load(key);
-    if (saved !== null) {
-        if (el.isContentEditable || el.contentEditable === 'true') el.innerText = saved;
-        else el.value = saved;
-    }
-    el.addEventListener('input', () => {
-        save(key, (el.isContentEditable || el.contentEditable === 'true') ? el.innerText : el.value);
+// ── FIREBASE SYNC ─────────────────────────────────────────────────────────────
+
+let db = null, authed = false, connected = false, blocked = false;
+let flushTimer = null, weekRef = null;
+
+function setStatus(text) { document.getElementById('syncStatus').innerText = text; }
+function refreshStatus() {
+    if (!db) return setStatus('this device only');
+    if (!authed) return setStatus('signed out');
+    if (blocked) return setStatus('sync blocked — check database rules');
+    if (!connected) return setStatus('offline — saved on this device');
+    setStatus(Object.keys(dirty).length ? 'saving…' : 'synced ✓');
+}
+
+function scheduleFlush() {
+    clearTimeout(flushTimer);
+    flushTimer = setTimeout(flush, 400);
+    refreshStatus();
+}
+
+function flush() {
+    clearTimeout(flushTimer);
+    if (!db || !authed) return;
+    const updates = {}, sent = [];
+    Object.entries(dirty).forEach(([id, n]) => {
+        if (inflight[id] === n) return;
+        const i = id.indexOf('|'), week = id.slice(0, i), key = id.slice(i + 1);
+        const v = weekData(week)[key];
+        updates[`plannerWeeks/${week}/${key}`] = v === undefined ? null : v;
+        inflight[id] = n;
+        sent.push([id, n]);
+    });
+    if (!sent.length) return;
+    db.ref().update(updates).then(() => {
+        sent.forEach(([id, n]) => {
+            if (dirty[id] === n) delete dirty[id];
+            if (inflight[id] === n) delete inflight[id];
+        });
+        lsSet('dirty', JSON.stringify(dirty));
+        blocked = false;
+        refreshStatus();
+    }).catch(err => {
+        sent.forEach(([id, n]) => { if (inflight[id] === n) delete inflight[id]; });
+        if (err && /permission/i.test(String(err.code || err.message))) blocked = true;
+        refreshStatus();
     });
 }
 
-// ── THEME & VIEW (these run immediately, before Firebase) ─────────────────────
-
-if (load('theme') === 'dark') document.body.classList.add('dark');
-if (window.innerWidth < 800) document.body.classList.add('mobile');
-
-function toggleTheme() {
-    document.body.classList.toggle('dark');
-    save('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-}
-function toggleView() {
-    document.body.classList.toggle('mobile');
-}
-
-// ── FIREBASE ──────────────────────────────────────────────────────────────────
-
-let db = null;
-let firebaseReady = false;
-let pushTimeout = null;
-
-function pushToFirebase() {
-    if (!firebaseReady) return;
-    clearTimeout(pushTimeout);
-    pushTimeout = setTimeout(() => {
-        const all = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k.startsWith('planner:') && !k.startsWith('planner:archive-')) {
-                all[k.replace('planner:', '')] = localStorage.getItem(k);
-            }
+// Take what Firebase holds for a week. Fields with unsent local edits are kept;
+// everything else follows Firebase, including fields cleared on another device.
+function applyRemote(week, remote) {
+    remote = remote || {};
+    const d = weekData(week), changed = [];
+    new Set([...Object.keys(d), ...Object.keys(remote)]).forEach(k => {
+        if (dirty[week + '|' + k]) return;
+        const r = remote[k] == null ? undefined : String(remote[k]);
+        if (d[k] !== r) {
+            if (r === undefined) delete d[k]; else d[k] = r;
+            changed.push(k);
         }
-        db.ref('plannerState').set(all)
-          .then(() => { document.getElementById('syncStatus').innerText = 'synced ✓'; })
-          .catch(() => { document.getElementById('syncStatus').innerText = 'sync error'; });
-    }, 600);
+    });
+    if (!changed.length) return;
+    persistWeek(week);
+    if (week === viewWeek) changed.forEach(applyField);
 }
 
-function initFirebase() {
-    // No config pasted — render immediately from localStorage
-    if (!firebaseConfig.databaseURL) {
-        document.getElementById('syncStatus').innerText = 'local only';
-        renderAll();
-        return;
-    }
+function attachWeek() {
+    if (weekRef) { weekRef.off(); weekRef = null; }
+    if (!db || !authed) return;
+    const week = viewWeek;
+    weekRef = db.ref('plannerWeeks/' + week);
+    weekRef.on('value', snap => {
+        blocked = false;
+        applyRemote(week, snap.val());
+        refreshStatus();
+    }, () => { blocked = true; refreshStatus(); });
+}
 
-    // Fallback: if Firebase hasn't responded in 4 seconds, render from localStorage
-    const fallback = setTimeout(() => {
-        document.getElementById('syncStatus').innerText = 'offline — using local data';
-        renderAll();
-    }, 4000);
+function startSync() {
+    db.ref('.info/connected').on('value', snap => {
+        connected = !!snap.val();
+        if (connected) { inflight = {}; flush(); }
+        refreshStatus();
+    });
+    db.ref('plannerMeta/timer').on('value', snap => {
+        const t = snap.val();
+        if (t && t.updatedAt > timer.updatedAt) {
+            timer = { remaining: +t.remaining || 0, endsAt: t.endsAt || null, updatedAt: t.updatedAt };
+            lsSet('timer', JSON.stringify(timer));
+            lastLeft = timerLeft();
+            renderTimer();
+        }
+    }, () => {});
+    attachWeek();
+    migrateLegacy().catch(() => {});
+    flush();
+}
 
-    try {
-        db = firebase.database();
+// ── ONE-OFF MOVE OF DATA FROM THE PREVIOUS VERSION ────────────────────────────
 
-        let firstLoad = true;
+function convertLegacy(flat) {
+    const out = {};
+    Object.keys(flat || {}).forEach(k => {
+        const v = flat[k];
+        if (typeof v !== 'string' || v.trim() === '') return;
+        if (k === 'log') {
+            v.split('\n').forEach((line, i) => { if (line.trim()) out['log-' + i] = line; });
+        } else if (k.startsWith('left-') || DAYS.some(d => k.startsWith(d.key + '-'))) {
+            if (k.endsWith('-pomo') && !v.includes('1')) return;
+            out[k] = v;
+        }
+    });
+    return out;
+}
 
-        db.ref('plannerState').on('value', snapshot => {
-
-            // Write remote data into localStorage
-            const remote = snapshot.val();
-            if (remote) {
-                Object.keys(remote).forEach(k => {
-                    localStorage.setItem('planner:' + k, remote[k]);
-                });
-            }
-
-            if (firstLoad) {
-                // First response: clear fallback, render everything now that
-                // localStorage is up to date with Firebase
-                firstLoad = false;
-                clearTimeout(fallback);
-                firebaseReady = true;
-                document.getElementById('syncStatus').innerText = 'synced ✓';
-                renderAll();
-            } else {
-                // Subsequent update from another device.
-                // Only reload if not actively editing (no edit in last 60 seconds)
-                if (Date.now() - lastEditTime > 60000) {
-                    document.getElementById('syncStatus').innerText = 'updating…';
-                    setTimeout(() => location.reload(), 500);
-                } else {
-                    document.getElementById('syncStatus').innerText = 'update ready — reload when done';
+async function migrateLegacy() {
+    const flag = await db.ref('plannerMeta/migratedV2').once('value');
+    if (flag.exists()) return;
+    const week = knownCurrent;
+    const [legacy, current] = await Promise.all([
+        db.ref('plannerState').once('value'),
+        db.ref('plannerWeeks/' + week).once('value')
+    ]);
+    let flat = legacy.val();
+    if (!flat) {
+        flat = {};
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k.startsWith('planner:') && !k.startsWith('planner:archive-')) {
+                    flat[k.slice(8)] = localStorage.getItem(k);
                 }
             }
-        });
+        } catch (e) {}
+    }
+    const existing = current.val() || {};
+    const mine = weekData(week);
+    Object.entries(convertLegacy(flat)).forEach(([k, v]) => {
+        if (existing[k] == null && !mine[k]) setVal(week, k, v);
+    });
+    if (week === viewWeek) applyAll();
+    await db.ref('plannerMeta/migratedV2').set(Date.now());
+}
 
-    } catch(e) {
-        clearTimeout(fallback);
-        document.getElementById('syncStatus').innerText = 'sync error';
-        console.error(e);
-        renderAll();
+// ── FIELDS ────────────────────────────────────────────────────────────────────
+// Every editable thing on the page is registered here by key, so a change
+// arriving from another device updates just that field, with no page reload.
+
+const fields = {};
+
+function cleanText(el) {
+    const t = el.innerText.replace(/\s*\n\s*/g, ' ');
+    return t.trim() === '' ? '' : t;
+}
+
+function applyField(key) {
+    if (!fields[key] && key.startsWith('log-')) ensureLogLines(+key.slice(4) + 1);
+    const f = fields[key];
+    if (!f) return;
+    const v = weekData(viewWeek)[key] || '';
+    if (f.type === 'pomo') {
+        f.el.querySelectorAll('span').forEach((s, i) => s.classList.toggle('filled', v[i] === '1'));
+    } else if (document.activeElement === f.el) {
+        return;                                   // don't disturb typing; refreshed on blur
+    } else if (f.type === 'num') {
+        if (f.el.value !== v) f.el.value = v;
+    } else if (cleanText(f.el) !== v) {
+        f.el.textContent = v;
     }
 }
 
-// ── RENDER (called once, after Firebase has written to localStorage) ──────────
+function applyAll() {
+    let maxLog = -1;
+    Object.keys(weekData(viewWeek)).forEach(k => { if (k.startsWith('log-')) maxLog = Math.max(maxLog, +k.slice(4)); });
+    ensureLogLines(maxLog + 1);
+    Object.keys(fields).forEach(applyField);
+}
 
-let hasRendered = false;
+function focusNext(el) {
+    const all = Array.from(document.querySelectorAll('[contenteditable]')).filter(e => e.offsetParent !== null);
+    const next = all[all.indexOf(el) + 1];
+    if (next) next.focus();
+}
 
-function renderAll() {
-    if (hasRendered) return;
-    hasRendered = true;
+function bindText(el, key) {
+    fields[key] = { el, type: 'text' };
+    el.addEventListener('input', () => setVal(viewWeek, key, cleanText(el)));
+    el.addEventListener('blur', () => applyField(key));
+    el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); focusNext(el); }
+    });
+    el.addEventListener('paste', e => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain').replace(/\s*\n\s*/g, ' ');
+        document.execCommand('insertText', false, text);
+    });
+}
 
-    // Static left-box fields — now populated from up-to-date localStorage
-    document.querySelectorAll('[data-key]').forEach(el => persist(el, el.dataset.key));
+function bindNumber(el, key) {
+    fields[key] = { el, type: 'num' };
+    el.addEventListener('input', () => setVal(viewWeek, key, el.value));
+    el.addEventListener('blur', () => applyField(key));
+}
 
-    // Quote
+function bindPomo(el, key) {
+    fields[key] = { el, type: 'pomo' };
+    for (let i = 0; i < 6; i++) {
+        const s = document.createElement('span');
+        s.onclick = () => {
+            s.classList.toggle('filled');
+            const state = Array.from(el.querySelectorAll('span')).map(c => c.classList.contains('filled') ? '1' : '0').join('');
+            setVal(viewWeek, key, state.includes('1') ? state : '');
+        };
+        el.appendChild(s);
+    }
+}
+
+// ── BUILD THE PAGE (once) ─────────────────────────────────────────────────────
+
+function buildDay(di) {
+    const day = DAYS[di];
+    const el = document.getElementById(day.key);
+    el.innerHTML = `<h4>${day.name}<small></small></h4>`;
+    HOURS.forEach(h => {
+        const block = document.createElement('div');
+        block.className = 'time-block';
+        block.dataset.hour = h;
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'time';
+        timeDiv.innerText = `${pad(h)}:00`;
+        const inputDiv = document.createElement('div');
+        inputDiv.contentEditable = true;
+        inputDiv.className = 'input';
+        bindText(inputDiv, `${day.key}-time-${h}`);
+        block.append(timeDiv, inputDiv);
+        el.appendChild(block);
+    });
+    SECTIONS.forEach(sec => {
+        const w = document.createElement('div');
+        w.className = 'section';
+        w.innerHTML = `<b>${sec.label}</b>`;
+        for (let i = 0; i < 2; i++) {
+            const taskKey = `${day.key}-${sec.key}-${i}`;
+            const t = document.createElement('div');
+            t.className = 'task';
+
+            const txt = document.createElement('span');
+            txt.contentEditable = true;
+            bindText(txt, taskKey + '-text');
+
+            const tar = document.createElement('input');
+            tar.type = 'number';
+            tar.className = 'target';
+            tar.title = 'Target pomodoros';
+            bindNumber(tar, taskKey + '-target');
+
+            const pmo = document.createElement('div');
+            pmo.className = 'pomo';
+            bindPomo(pmo, taskKey + '-pomo');
+
+            const carryBtn = document.createElement('button');
+            carryBtn.className = 'carry';
+            carryBtn.title = 'Carry to next day';
+            carryBtn.innerText = '→';
+            carryBtn.onclick = () => carryForward(di, sec, i);
+
+            t.append(txt, tar, pmo, carryBtn);
+            w.appendChild(t);
+        }
+        el.appendChild(w);
+    });
+}
+
+function ensureLogLines(n) {
+    const log = document.getElementById('log');
+    let count = log.querySelectorAll('.entry').length;
+    for (; count < Math.max(30, n); count++) {
+        const e = document.createElement('div');
+        e.className = 'entry';
+        e.contentEditable = true;
+        bindText(e, 'log-' + count);
+        log.appendChild(e);
+    }
+}
+
+function buildUI() {
+    document.querySelectorAll('[data-key]').forEach(el => bindText(el, el.dataset.key));
+    DAYS.forEach((d, i) => buildDay(i));
+    ensureLogLines(30);
+
     const quotes = [
         "The mind is for having ideas, not holding them. — David Allen",
         "You fall to the level of your systems. — James Clear",
@@ -471,309 +809,356 @@ function renderAll() {
     ];
     document.getElementById('quote').innerText = quotes[Math.floor(Date.now() / 604800000) % quotes.length];
 
-    // Mark today
-    const dayMap = ["weekend","mon","tue","wed","thu","fri","weekend"];
-    document.getElementById(dayMap[new Date().getDay()]).classList.add('today');
-
-    // Build day columns
-    createDay(document.getElementById('mon'),     'Monday',    'mon');
-    createDay(document.getElementById('tue'),     'Tuesday',   'tue');
-    createDay(document.getElementById('wed'),     'Wednesday', 'wed');
-    createDay(document.getElementById('thu'),     'Thursday',  'thu');
-    createDay(document.getElementById('fri'),     'Friday',    'fri');
-    createDay(document.getElementById('weekend'), 'Weekend',   'weekend');
-
-    // Build log
-    initLog();
-
-    // Hour highlight
-    highlight();
-    setInterval(highlight, 60000);
-
-    // Timer
-    updateTimer();
-
-    // Notification permission (quiet — on first click)
-    if ('Notification' in window && Notification.permission === 'default') {
-        document.body.addEventListener('click', () => {
-            if (Notification.permission === 'default') Notification.requestPermission();
-        }, { once: true });
-    }
+    document.getElementById('quickInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); addQuick(); }
+    });
 }
 
-// ── HOUR HIGHLIGHT ────────────────────────────────────────────────────────────
+// ── WEEK VIEW ─────────────────────────────────────────────────────────────────
 
-function highlight() {
+function markToday() {
+    document.querySelectorAll('.day').forEach(d => d.classList.remove('today'));
     document.querySelectorAll('.time-block').forEach(t => t.classList.remove('active'));
-    const h = new Date().getHours().toString();
-    const hours = ["10","11","12","13","14","15"];
-    const i = hours.indexOf(h);
-    if (i !== -1) {
-        const today = document.querySelector('.day.today');
-        if (today) {
-            const blocks = today.querySelectorAll('.time-block');
-            if (blocks[i]) blocks[i].classList.add('active');
+    if (viewWeek !== knownCurrent) return;
+    const now = new Date();
+    const dayKey = ['weekend', 'mon', 'tue', 'wed', 'thu', 'fri', 'weekend'][now.getDay()];
+    const today = document.getElementById(dayKey);
+    today.classList.add('today');
+    const block = today.querySelector(`.time-block[data-hour="${now.getHours()}"]`);
+    if (block) block.classList.add('active');
+}
+
+function showWeek(id) {
+    if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+    viewWeek = id;
+    document.getElementById('weekLabel').innerText = weekLabel(id);
+    document.getElementById('thisWeekBtn').style.display = id === knownCurrent ? 'none' : '';
+    DAYS.forEach((day, i) => {
+        const small = document.querySelector(`#${day.key} h4 small`);
+        small.innerText = i < 5 ? shortDate(dayDate(id, i))
+                                : `${dayDate(id, 5).getDate()}–${shortDate(dayDate(id, 6))}`;
+    });
+    markToday();
+    applyAll();
+    attachWeek();
+}
+
+function goWeek(n) { showWeek(shiftWeek(viewWeek, n)); }
+function goThisWeek() { showWeek(knownCurrent); }
+
+// Runs every minute: moves the "today" and hour highlights, and rolls over to
+// the new week on Monday if the page was left open.
+function minuteTick() {
+    const cur = weekIdOf(new Date());
+    if (cur !== knownCurrent) {
+        const follow = viewWeek === knownCurrent;
+        knownCurrent = cur;
+        if (follow) { showWeek(cur); return; }
+        document.getElementById('thisWeekBtn').style.display = '';
+    }
+    markToday();
+}
+
+// ── THEME & VIEW ──────────────────────────────────────────────────────────────
+
+let legacyTheme = null;
+try { legacyTheme = localStorage.getItem('planner:theme'); } catch (e) {}
+if (lsGet('theme', legacyTheme) === 'dark') document.body.classList.add('dark');
+if (window.innerWidth < 800) document.body.classList.add('mobile');
+
+function toggleTheme() {
+    document.body.classList.toggle('dark');
+    lsSet('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+}
+function toggleView() {
+    document.body.classList.toggle('mobile');
+    if (document.body.classList.contains('mobile') && viewWeek !== knownCurrent) showWeek(knownCurrent);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+
+let toastTimer = null;
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── CARRY FORWARD ─────────────────────────────────────────────────────────────
+
+async function carryForward(di, sec, index) {
+    const src = `${DAYS[di].key}-${sec.key}-${index}`;
+    const from = weekData(viewWeek);
+    const text = from[src + '-text'];
+    if (!text) return;
+    const target = from[src + '-target'] || '';
+
+    let week = viewWeek, ndi = di + 1, where = DAYS[Math.min(ndi, 5)].name;
+    if (ndi >= DAYS.length) {                     // Weekend → Monday of the following week
+        ndi = 0;
+        week = shiftWeek(viewWeek, 1);
+        where = 'Monday next week';
+        if (db && authed && connected) {
+            try { applyRemote(week, (await db.ref('plannerWeeks/' + week).once('value')).val()); } catch (e) {}
         }
     }
-}
-
-// ── DAYS & TASKS ──────────────────────────────────────────────────────────────
-
-const dayOrder = ["mon","tue","wed","thu","fri","weekend"];
-
-function createCircles(pomo, taskKey) {
-    const savedState = load(taskKey + '-pomo', '000000');
-    for (let i = 0; i < 6; i++) {
-        const s = document.createElement('span');
-        if (savedState[i] === '1') s.classList.add('filled');
-        s.onclick = () => {
-            s.classList.toggle('filled');
-            const state = Array.from(pomo.querySelectorAll('span'))
-                .map(c => c.classList.contains('filled') ? '1' : '0').join('');
-            save(taskKey + '-pomo', state);
-        };
-        pomo.appendChild(s);
-    }
-}
-
-function carryForward(dayKey, sectionKey, index) {
-    const taskKey = `${dayKey}-${sectionKey}-${index}`;
-    const text = load(taskKey + '-text', '');
-    if (!text) return;
-    const di = dayOrder.indexOf(dayKey);
-    const nextDay = dayOrder[(di + 1) % dayOrder.length];
+    const to = weekData(week);
     for (let i = 0; i < 2; i++) {
-        const targetKey = `${nextDay}-${sectionKey}-${i}`;
-        if (!load(targetKey + '-text', '')) {
-            save(targetKey + '-text', text);
-            save(targetKey + '-target', load(taskKey + '-target', ''));
-            save(targetKey + '-pomo', '000000');
-            // Update visible text field
-            const targetEl = document.querySelector(`[data-task-key="${targetKey}"] span[contenteditable]`);
-            if (targetEl) targetEl.innerText = text;
-            // Refresh pomo circles
-            const targetPomo = document.querySelector(`[data-task-key="${targetKey}"] .pomo`);
-            if (targetPomo) { targetPomo.innerHTML = ''; createCircles(targetPomo, targetKey); }
+        const dest = `${DAYS[ndi].key}-${sec.key}-${i}`;
+        if (!to[dest + '-text']) {
+            setVal(week, dest + '-text', text);
+            setVal(week, dest + '-target', target);
+            setVal(week, dest + '-pomo', '');
+            if (week === viewWeek) ['-text', '-target', '-pomo'].forEach(s => applyField(dest + s));
+            toast(`Carried to ${where}`);
             return;
         }
     }
-    alert('No empty slot in ' + nextDay + ' ' + sectionKey + ' — clear one first.');
-}
-
-function addTask(parent, taskKey, dayKey, sectionKey, index) {
-    const t = document.createElement('div');
-    t.className = 'task';
-    t.dataset.taskKey = taskKey;
-
-    const txt = document.createElement('span');
-    txt.contentEditable = true;
-    persist(txt, taskKey + '-text');
-
-    const tar = document.createElement('input');
-    tar.type = 'number';
-    tar.className = 'target';
-    persist(tar, taskKey + '-target');
-
-    const pmo = document.createElement('div');
-    pmo.className = 'pomo';
-    createCircles(pmo, taskKey);
-
-    const carryBtn = document.createElement('button');
-    carryBtn.className = 'carry';
-    carryBtn.title = 'Carry to next day';
-    carryBtn.innerText = '→';
-    carryBtn.onclick = () => carryForward(dayKey, sectionKey, index);
-
-    t.append(txt, tar, pmo, carryBtn);
-    parent.appendChild(t);
-}
-
-function createDay(el, name, dayKey) {
-    el.innerHTML = `<h4>${name}</h4>`;
-    ["10","11","12","13","14","15"].forEach(h => {
-        const block = document.createElement('div');
-        block.className = 'time-block';
-        const timeDiv = document.createElement('div');
-        timeDiv.className = 'time';
-        timeDiv.innerText = `${h}:00`;
-        const inputDiv = document.createElement('div');
-        inputDiv.contentEditable = true;
-        inputDiv.className = 'input';
-        persist(inputDiv, `${dayKey}-time-${h}`);
-        block.append(timeDiv, inputDiv);
-        el.appendChild(block);
-    });
-    [
-        { key: 'mit',        label: 'Most Important Task' },
-        { key: 'secondary',  label: 'Secondary Tasks'     },
-        { key: 'additional', label: 'Additional Tasks'    }
-    ].forEach(sec => {
-        const w = document.createElement('div');
-        w.className = 'section';
-        w.innerHTML = `<b>${sec.label}</b>`;
-        for (let i = 0; i < 2; i++) addTask(w, `${dayKey}-${sec.key}-${i}`, dayKey, sec.key, i);
-        el.appendChild(w);
-    });
+    toast(`No empty slot under ${sec.label} on ${where} — clear one first.`);
 }
 
 // ── LOG ───────────────────────────────────────────────────────────────────────
-
-function saveLog() {
-    const entries = document.querySelectorAll('#log .entry');
-    save('log', Array.from(entries).map(e => e.innerText).join('\n'));
-}
-
-function initLog() {
-    const log = document.getElementById('log');
-    const saved = load('log', '');
-    const lines = saved ? saved.split('\n') : [];
-    const total = Math.max(30, lines.length);
-    for (let i = 0; i < total; i++) {
-        const e = document.createElement('div');
-        e.className = 'entry';
-        e.contentEditable = true;
-        if (lines[i]) e.innerText = lines[i];
-        e.addEventListener('input', saveLog);
-        log.appendChild(e);
-    }
-}
 
 function addQuick() {
     const input = document.getElementById('quickInput');
     const val = input.value.trim();
     if (!val) return;
-    const log = document.getElementById('log');
-    const e = document.createElement('div');
-    e.className = 'entry';
-    e.contentEditable = true;
-    e.innerText = val;
-    e.addEventListener('input', saveLog);
-    log.appendChild(e);
+    const d = weekData(viewWeek);
+    let i = 0;
+    while (d['log-' + i]) i++;                    // first empty line
+    setVal(viewWeek, 'log-' + i, val);
+    applyField('log-' + i);
     input.value = '';
-    saveLog();
+    toast('Added to log');
 }
 
-// ── CLEAR WEEK ────────────────────────────────────────────────────────────────
+// ── CLEAR WEEK & ARCHIVE ──────────────────────────────────────────────────────
 
-function clearWeek() {
-    if (!confirm('Archive the current week and clear the board?')) return;
-    const archiveDate = new Date().toISOString().slice(0, 10);
-    const snapshot = {};
-    for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k.startsWith('planner:') && !k.startsWith('planner:archive-')) {
-            snapshot[k.replace('planner:', '')] = localStorage.getItem(k);
-        }
+async function clearWeek() {
+    const data = Object.assign({}, weekData(viewWeek));
+    if (!Object.keys(data).length) { toast('This week is already empty.'); return; }
+    if (!db || !authed || !connected) {
+        toast('Clear Week needs a connection, so the archive is saved first.');
+        return;
     }
-    try { localStorage.setItem('planner:archive-' + archiveDate, JSON.stringify(snapshot)); } catch(e) {}
-    if (firebaseReady) db.ref('plannerArchive/' + archiveDate).set(snapshot);
-
-    Object.keys(snapshot).forEach(k => {
-        if (k.startsWith('mon-') || k.startsWith('tue-') || k.startsWith('wed-') ||
-            k.startsWith('thu-') || k.startsWith('fri-') || k.startsWith('weekend-') ||
-            k === 'log') {
-            localStorage.removeItem('planner:' + k);
-        }
-    });
-    pushToFirebase();
-    location.reload();
+    if (!confirm(`Archive and clear everything for the ${weekName(viewWeek)}, including the left column?`)) return;
+    try {
+        await db.ref('plannerArchives').push({ week: viewWeek, clearedAt: Date.now(), data });
+    } catch (e) {
+        toast('Could not save the archive — nothing was cleared.');
+        return;
+    }
+    Object.keys(data).forEach(k => setVal(viewWeek, k, ''));
+    applyAll();
+    flush();
+    toast('Week archived and cleared');
 }
+
+function describe(data) {
+    const lines = [];
+    const add = (label, text) => { if (text) lines.push(`${label}: ${text}`); };
+    Object.keys(LEFT_LABELS).forEach(k => {
+        for (let i = 0; i < 3; i++) add(LEFT_LABELS[k], data[`left-${k}-${i}`]);
+    });
+    DAYS.forEach(day => {
+        HOURS.concat(Object.keys(data).filter(k => k.startsWith(day.key + '-time-')).map(k => +k.split('-').pop()))
+            .filter((h, i, a) => a.indexOf(h) === i).sort((a, b) => a - b)
+            .forEach(h => add(`${day.name} ${pad(h)}:00`, data[`${day.key}-time-${h}`]));
+        SECTIONS.forEach(sec => {
+            for (let i = 0; i < 2; i++) {
+                const k = `${day.key}-${sec.key}-${i}`;
+                if (!data[k + '-text']) continue;
+                const done = (data[k + '-pomo'] || '').split('1').length - 1;
+                const target = data[k + '-target'];
+                add(`${day.name} · ${sec.label}`, data[k + '-text'] + (target || done ? ` (${done}${target ? ' of ' + target : ''} pomodoros)` : ''));
+            }
+        });
+    });
+    Object.keys(data).filter(k => k.startsWith('log-')).sort((a, b) => a.slice(4) - b.slice(4))
+        .forEach(k => add('Did', data[k]));
+    return lines.join('\n') || '(empty)';
+}
+
+async function openArchives() {
+    if (!db || !authed || !connected) { toast('Cleared weeks can be viewed when you are online.'); return; }
+    const list = document.getElementById('archiveList');
+    list.innerHTML = 'Loading…';
+    document.getElementById('archiveOverlay').style.display = 'flex';
+    const items = [];
+    try {
+        const [fresh, old] = await Promise.all([
+            db.ref('plannerArchives').once('value'),
+            db.ref('plannerArchive').once('value')
+        ]);
+        Object.values(fresh.val() || {}).forEach(a => {
+            if (a && a.data) items.push({ week: a.week, when: a.clearedAt, data: a.data });
+        });
+        Object.entries(old.val() || {}).forEach(([date, flat]) => {
+            items.push({ week: null, when: new Date(date + 'T12:00:00').getTime(), data: convertLegacy(flat) });
+        });
+    } catch (e) {
+        list.innerHTML = 'Could not load cleared weeks.';
+        return;
+    }
+    items.sort((a, b) => b.when - a.when);
+    list.innerHTML = items.length ? '' : 'Nothing has been cleared yet.';
+    items.forEach(a => {
+        const when = new Date(a.when);
+        const item = document.createElement('div');
+        item.className = 'archive-item';
+        const title = document.createElement('b');
+        title.innerText = (a.week ? weekLabel(a.week) : 'Earlier version') + ` — cleared ${shortDate(when)} ${when.getFullYear()}`;
+        const view = document.createElement('button');
+        view.innerText = 'View';
+        view.onclick = () => item.classList.toggle('open');
+        const restore = document.createElement('button');
+        const dest = a.week || viewWeek;
+        restore.innerText = 'Restore';
+        restore.onclick = () => {
+            if (!confirm(`Restore these entries into the ${weekName(dest)}? Anything in the same fields will be replaced.`)) return;
+            Object.entries(a.data).forEach(([k, v]) => setVal(dest, k, v));
+            closeArchives();
+            showWeek(dest);
+            toast('Week restored');
+        };
+        const body = document.createElement('pre');
+        body.innerText = describe(a.data);
+        item.append(title, view, restore, body);
+        list.appendChild(item);
+    });
+}
+function closeArchives() { document.getElementById('archiveOverlay').style.display = 'none'; }
 
 // ── TIMER ─────────────────────────────────────────────────────────────────────
+// The timer stores the time it will finish rather than counting down, so it
+// stays accurate in a background tab and is written only on start/pause/reset.
 
-let timerInterval = null;
-let seconds = parseInt(load('timer-seconds', '1500'));
+let timer = Object.assign({ remaining: POMODORO_SECONDS, endsAt: null, updatedAt: 0 }, lsJSON('timer', {}));
+let lastLeft = null;
 let audioCtx = null;
+
+function timerLeft() {
+    return timer.endsAt ? Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000)) : timer.remaining;
+}
+
+function saveTimer() {
+    timer.updatedAt = Date.now();
+    lsSet('timer', JSON.stringify(timer));
+    if (db && authed) db.ref('plannerMeta/timer').set(timer).catch(() => {});
+    lastLeft = timerLeft();
+    renderTimer();
+}
 
 function beep() {
     try {
         audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
-    } catch(e) {}
+        [0, 0.5, 1].forEach(delay => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = 880;
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime + delay);
+            osc.start(audioCtx.currentTime + delay);
+            osc.stop(audioCtx.currentTime + delay + 0.3);
+        });
+    } catch (e) {}
 }
 
-function timerComplete() {
-    document.getElementById('timerBox').classList.add('alert');
-    beep();
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Pomodoro complete', { body: 'Time to take a break.' });
-    }
-}
-
-function updateTimer() {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    const display = `${m}:${s.toString().padStart(2, '0')}`;
+function renderTimer() {
+    const left = timerLeft();
+    const display = `${Math.floor(left / 60)}:${pad(left % 60)}`;
     document.getElementById('time').innerText = display;
     document.getElementById('topTime').innerText = display;
-    save('timer-seconds', seconds);
+    const finished = !!timer.endsAt && left === 0;
+    document.body.classList.toggle('timer-alert', finished);
+    document.title = timer.endsAt ? `${display} · Weekly Planner` : 'Weekly Planner';
+    if (finished && lastLeft !== null && lastLeft > 0) {
+        beep();
+        try {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Pomodoro complete', { body: 'Time to take a break.' });
+            }
+        } catch (e) {}
+    }
+    lastLeft = left;
 }
 
 function startTimer() {
-    if (timerInterval) return;
-    document.getElementById('timerBox').classList.remove('alert');
-    timerInterval = setInterval(() => {
-        if (seconds > 0) {
-            seconds--;
-            updateTimer();
-            if (seconds === 0) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                timerComplete();
-            }
-        }
-    }, 1000);
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    } catch (e) {}
+    if (timer.endsAt && timerLeft() > 0) return;  // already running
+    const left = timerLeft() || POMODORO_SECONDS;
+    timer = { remaining: left, endsAt: Date.now() + left * 1000, updatedAt: 0 };
+    saveTimer();
 }
-
-function pauseTimer() { clearInterval(timerInterval); timerInterval = null; }
-
+function pauseTimer() {
+    if (!timer.endsAt) return;
+    timer = { remaining: timerLeft(), endsAt: null, updatedAt: 0 };
+    saveTimer();
+}
 function resetTimer() {
-    pauseTimer();
-    seconds = 1500;
-    document.getElementById('timerBox').classList.remove('alert');
-    updateTimer();
+    timer = { remaining: POMODORO_SECONDS, endsAt: null, updatedAt: 0 };
+    saveTimer();
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 
 function initAuth() {
     firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
 
     const provider = new firebase.auth.GoogleAuthProvider();
     const overlay  = document.getElementById('signinOverlay');
 
     document.getElementById('signinBtn').onclick = () => {
         firebase.auth().signInWithPopup(provider)
-            .catch(() => {
-                document.getElementById('syncStatus').innerText = 'sign-in failed';
-            });
+            .catch(() => { setStatus('sign-in failed'); });
     };
 
+    let started = false;
     firebase.auth().onAuthStateChanged(user => {
+        authed = !!user;
+        document.getElementById('userEmail').innerText = user ? user.email : '';
+        overlay.style.display = user ? 'none' : 'flex';
         if (user) {
-            // Signed in — hide overlay and load data
-            overlay.style.display = 'none';
-            document.getElementById('syncStatus').innerText = user.email;
-            initFirebase();
-        } else {
-            // Not signed in — show overlay
-            overlay.style.display = 'flex';
+            blocked = false;
+            if (!started) { started = true; startSync(); } else { attachWeek(); flush(); }
+        } else if (weekRef) {
+            weekRef.off(); weekRef = null;
         }
+        refreshStatus();
     });
 }
 
 function signOut() {
-    firebase.auth().signOut();
+    flush();
+    if (typeof firebase !== 'undefined') firebase.auth().signOut();
 }
 
-// ── BOOT ─────────────────────────────────────────────────────────────────────
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+// The page is drawn straight away from this device's copy; Firebase then
+// updates individual fields as it responds.
 
-initAuth();
+buildUI();
+showWeek(knownCurrent);
+renderTimer();
+setInterval(renderTimer, 250);
+setInterval(minuteTick, 30000);
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) flush(); else { minuteTick(); renderTimer(); }
+});
+window.addEventListener('pagehide', flush);
+
+if (typeof firebase === 'undefined') refreshStatus();
+else {
+    try { initAuth(); }
+    catch (e) { console.error(e); db = null; refreshStatus(); }
+}
 
 </script>
 </body>
